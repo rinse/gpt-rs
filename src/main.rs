@@ -1,6 +1,6 @@
 mod cli;
 
-use std::result::Result;
+use std::{result::Result, str::FromStr};
 use anyhow::Context;
 use chatgpt::{config::ModelConfiguration, prelude::{ChatGPT, ChatMessage}};
 use clap::Parser;
@@ -32,7 +32,15 @@ async fn main() -> Result<(), anyhow::Error> {
         api_key,
         ModelConfiguration {
             engine: chatgpt::config::ChatGPTEngine::Custom("gpt-4o-mini"), 
-            ..ModelConfiguration::default()
+            temperature: args.temperature,
+            top_p: args.top_p,
+            max_tokens: args.max_tokens,
+            presence_penalty: args.presence_penalty,
+            frequency_penalty: args.frequency_penalty,
+            reply_count: args.reply_count,
+            api_url: url::Url::from_str(args.api_url.as_str())
+                .context("API_URL must be a URL")?,
+            timeout: std::time::Duration::from_secs(args.timeout),
         }
     )?;
     let response = client.send_history(&history)
