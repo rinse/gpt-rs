@@ -7,17 +7,21 @@ use clap::Parser;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
+    std::env::set_var("RUST_LOG", "info");
     let args = cli::Args::try_parse()?;
-    let is_debug = args.debug;
-    log_debug(is_debug, || format!("prompt: <{}>", args.prompt));
+    if args.debug {
+        std::env::set_var("RUST_LOG", "debug");
+    }
+    env_logger::init();
+    log::debug!("prompt: <{}>", args.prompt);
     let api_key = std::env::var("CHATGPT_API_KEY")
         .context("An environment variable CHATGPT_API_KEY is required.")?;
-    log_debug(is_debug, || "api_key: <***>".to_owned());
+    log::debug!("api_key: <***>");
     let input = get_input(&args.inputs)
         .map(Ok)
         .unwrap_or_else(get_input_from_stdin)
         .context("Failed to read inputs.")?;
-    log_debug(is_debug, || format!("input: <{}>", input));
+    log::debug!("input: <{}>", input);
     let history = vec![
         ChatMessage {
             role: chatgpt::types::Role::System,
@@ -46,17 +50,11 @@ async fn main() -> Result<(), anyhow::Error> {
     let response = client.send_history(&history)
         .await
         .context("Failed to fetch a response from ChatGPT.")?;
-    log_debug(is_debug, || format!("model: {}", response.model));
+    log::debug!("model: {}", response.model);
     let chat_content= response.message();
     let content = &chat_content.content;
     println!("{}", content);
     Ok(())
-}
-
-fn log_debug(is_debug: bool, message: impl FnOnce() -> String) {
-    if is_debug {
-        eprintln!("gpt-rs [DEBUG] - {}", message());
-    }
 }
 
 fn get_input_from_stdin() -> Result<String, std::io::Error> {
