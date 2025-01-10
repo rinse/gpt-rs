@@ -30,7 +30,7 @@ async fn main() -> Result<(), anyhow::Error> {
         ChatMessage {
             role: chatgpt::types::Role::User,
             content: input,
-        }
+        },
     ];
     let client = ChatGPT::new_with_config(
         api_key,
